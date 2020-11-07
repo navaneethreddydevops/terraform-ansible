@@ -1,5 +1,7 @@
 #!/bin/bash
-
+echo "Enter your region.."
+read REGION
+export REGION=${REGION}
 function workspace() {
     cd aws-jenkins
 }
@@ -17,10 +19,10 @@ function terraform_get(){
 }
 
 function terraform_plan(){
-    terraform plan -var-file conf/parameters-us-east-1.tf
+    terraform plan -var-file conf/parameters-${REGION}.tf
 }
 function terraform_apply(){
-    terraform apply -var-file conf/parameters-us-east-1.tf --auto-approve
+    terraform apply -var-file conf/parameters-${REGION}.tf --auto-approve
 }
 
 function main(){
