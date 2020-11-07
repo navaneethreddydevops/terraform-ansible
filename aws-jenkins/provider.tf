@@ -15,7 +15,15 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region                  = var.region
+  region                  = var.region-master
   shared_credentials_file = var.shared_credentials_file
   profile                 = var.profile
+  alias                   = "region_master"
+}
+
+provider "aws" {
+  region                  = var.region-worker
+  shared_credentials_file = var.shared_credentials_file
+  profile                 = var.profile
+  alias                   = "region_worker"
 }

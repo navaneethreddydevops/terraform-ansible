@@ -1,15 +1,20 @@
 resource "aws_vpc" "vpc-master" {
-  cidr_block           = var.cidr_block
+  provider             = aws.region_master
+  cidr_block           = var.master_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags                 = local.tags
+  tags                 = {
+    Name               = "master-vpc-jenkins"
+  }
 
 }
 
-output "iamuserarn" {
-  value = data.aws_iam_user.example
-}
-
-output "vpc_cidr" {
-  value = concat(aws_vpc.vpc-master.*.id, [""])[0]
+resource "aws_vpc" "vpc-worker" {
+  provider             = aws.region_worker
+  cidr_block           = var.worker_cidr_block
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+  tags                 = {
+    Name               = "worker-vpc-jenkins"
+  }
 }
