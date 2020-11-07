@@ -1,11 +1,11 @@
 variable "region" {
-    type = string
+  type = string
 }
 
 variable "shared_credentials_file" {
-    type = string
+  type = string
 }
 
 variable "profile" {
-    type = string
+  type = string
 }
