@@ -24,6 +24,9 @@ function terraform_plan(){
 function terraform_apply(){
     terraform apply -var-file conf/parameters-${REGION}.tf --auto-approve
 }
+function terraform_destroy(){
+    terraform destroy -var-file conf/parameters-${REGION}.tf --auto-approve
+}
 
 function main(){
     workspace
@@ -32,6 +35,7 @@ function main(){
     terraform_get
     terraform_plan
     terraform_apply
+    terraform_destroy
 }
 
 main
