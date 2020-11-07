@@ -1,5 +1,5 @@
 variable "profile" {
-  type = string
+  type    = string
   default = "default"
 }
 
@@ -14,7 +14,7 @@ variable "region-worker" {
 }
 
 variable "shared_credentials_file" {
-  type = string
+  type    = string
   default = "/Users/navaneethreddy/.aws/credentials"
 }
 
