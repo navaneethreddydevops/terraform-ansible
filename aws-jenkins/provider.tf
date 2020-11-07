@@ -8,7 +8,7 @@ terraform {
   backend "s3" {
     region = "us-east-1"
     bucket = "terraform-state-035612810169-us-east-1"
-    key    = "jenkins"
+    key    = "app-name/state.json"
 
   }
 }
