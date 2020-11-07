@@ -9,3 +9,7 @@ variable "shared_credentials_file" {
 variable "profile" {
   type = string
 }
+
+variable "alias" {
+  type = string
+}
