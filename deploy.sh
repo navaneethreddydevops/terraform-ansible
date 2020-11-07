@@ -19,7 +19,9 @@ function terraform_get(){
 function terraform_plan(){
     terraform plan -var-file conf/parameters-us-east-1.tf
 }
-
+function terraform_apply(){
+    terraform apply -var-file conf/parameters-us-east-1.tf --auto-approve
+}
 
 function main(){
     workspace
@@ -27,6 +29,7 @@ function main(){
     terraform_init
     terraform_get
     terraform_plan
+    terraform_apply
 }
 
 main
