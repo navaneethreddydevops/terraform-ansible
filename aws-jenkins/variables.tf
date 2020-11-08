@@ -27,3 +27,7 @@ variable "worker_cidr_block" {
   type    = string
   default = "192.168.0.0/16"
 }
+variable "external_ip" {
+  type    = string
+  default = "0.0.0.0/0"
+}

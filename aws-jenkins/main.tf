@@ -126,9 +126,100 @@ resource "aws_route_table" "internet-route-uswest-2" {
     Name = "Worker-Route-Table"
   }
 }
-
+# Main route table association for west vpc
 resource "aws_main_route_table_association" "set-worker-default-rt-table" {
   provider       = aws.region_worker
   vpc_id         = aws_vpc.vpc-worker.id
   route_table_id = aws_route_table.internet-route-uswest-2.id
+}
+
+# Security Group for Loadbalancer
+resource "aws_security_group" "lb-sg" {
+  provider    = aws.region_master
+  name        = "loadbalancer-sg"
+  description = "Allow 443 inbound traffic"
+  vpc_id      = aws_vpc.vpc-master.id
+  ingress {
+    description = "Allow 443 from anywhere"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "Allow 443 from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1 # All protocols
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Security Group for Jenkins Master
+resource "aws_security_group" "jenkins-master-sg" {
+  provider    = aws.region_master
+  name        = "jenkins-master-sg"
+  description = "Allow 443 inbound traffic"
+  vpc_id      = aws_vpc.vpc-master.id
+  ingress {
+    description = "Allow 443 from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.external_ip]
+  }
+  ingress {
+    description     = "Allow 8080 from Loadbalancer"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb-sg.id]
+  }
+  ingress {
+    description = "Allow traffic from uswest-2"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["192.168.0.0/24"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1 # All protocols
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Security Group for Jenkins Slave
+resource "aws_security_group" "jenkins-slave-sg" {
+  provider    = aws.region_worker
+  name        = "jenkins-slave-sg"
+  description = "Allow 443 inbound traffic"
+  vpc_id      = aws_vpc.vpc-worker.id
+  ingress {
+    description = "Allow 443 from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.external_ip]
+  }
+  ingress {
+    description = "Allow traffic from uswest-2"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["10.0.0.0/24"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1 # All protocols
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
