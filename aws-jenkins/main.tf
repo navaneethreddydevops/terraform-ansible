@@ -223,3 +223,28 @@ resource "aws_security_group" "jenkins-slave-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+#######OUTPUTS####################################
+output "VPC-US-EAST-1" {
+  value = aws_vpc.vpc-master.id
+}
+
+output "VPC-US-WEST-2" {
+  value = aws_vpc.vpc-worker.id
+}
+
+output "VPC-PEERING" {
+  value = aws_vpc_peering_connection.useast1-uswest2.id
+}
+
+output "LOADBALANCER-SG-ID" {
+  value = aws_security_group.lb-sg.id
+}
+
+output "JENKINS-MASTER-SG-ID" {
+  value = aws_security_group.jenkins-master-sg.id
+}
+
+output "JENKINS-SLAVE-SG-ID" {
+  value = aws_security_group.jenkins-slave-sg.id
+}
