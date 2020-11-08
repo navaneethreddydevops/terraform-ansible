@@ -80,5 +80,55 @@ resource "aws_vpc_peering_connection_accepter" "accept-peering" {
   provider                  = aws.region_worker
   vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
   auto_accept               = true
+}
+# US-EAST Route Table
+resource "aws_route_table" "internet-route" {
+  provider = aws.region_master
+  vpc_id   = aws_vpc.vpc-master.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw-east.id
+  }
+  route {
+    cidr_block                = "192.168.0.0/16"
+    vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
+  }
+  lifecycle {
+    ignore_changes = all
+  }
+  tags = {
+    Name = "Master-Route-Table"
+  }
+}
 
+resource "aws_main_route_table_association" "set-master-default-rt-table" {
+  provider       = aws.region_master
+  vpc_id         = aws_vpc.vpc-master.id
+  route_table_id = aws_route_table.internet-route.id
+}
+
+# us-west-2 Route Table
+resource "aws_route_table" "internet-route-uswest-2" {
+  provider = aws.region_worker
+  vpc_id   = aws_vpc.vpc-worker.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw-west.id
+  }
+  route {
+    cidr_block                = "10.0.0.0/16"
+    vpc_peering_connection_id = aws_vpc_peering_connection.useast1-uswest2.id
+  }
+  lifecycle {
+    ignore_changes = all
+  }
+  tags = {
+    Name = "Worker-Route-Table"
+  }
+}
+
+resource "aws_main_route_table_association" "set-worker-default-rt-table" {
+  provider       = aws.region_worker
+  vpc_id         = aws_vpc.vpc-worker.id
+  route_table_id = aws_route_table.internet-route-uswest-2.id
 }
