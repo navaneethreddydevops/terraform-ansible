@@ -31,3 +31,17 @@ variable "external_ip" {
   type    = string
   default = "0.0.0.0/0"
 }
+variable "instance_type" {
+  type    = string
+  default = "t2.micro"
+}
+variable "keypair" {
+  type    = string
+  default = "keypair"
+}
+
+variable "number-workers" {
+  type    = string
+  default = "1"
+}
+

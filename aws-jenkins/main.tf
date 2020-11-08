@@ -17,12 +17,6 @@ resource "aws_internet_gateway" "igw-east" {
   }
 }
 
-# Data to get all availability zones of VPC for master region
-data "aws_availability_zones" "us-east-azs" {
-  provider = aws.region_master
-  state    = "available"
-}
-
 resource "aws_subnet" "subnet_1" {
   provider          = aws.region_master
   availability_zone = element(data.aws_availability_zones.us-east-azs.names, 0)
@@ -53,12 +47,6 @@ resource "aws_internet_gateway" "igw-west" {
   tags = {
     Name = "worker-vpc-jenkins"
   }
-}
-
-# Data to get all availability zones of VPC for worker region
-data "aws_availability_zones" "us-west-azs" {
-  provider = aws.region_worker
-  state    = "available"
 }
 
 resource "aws_subnet" "subnet_1_west2" {
@@ -224,7 +212,38 @@ resource "aws_security_group" "jenkins-slave-sg" {
   }
 }
 
-#######OUTPUTS####################################
+######EC2_iNSTANCE###########
+resource "aws_instance" "jenkins-master" {
+  provider                    = aws.region_master
+  ami                         = data.aws_ssm_parameter.linuxAmiEast.value
+  instance_type               = var.instance_type
+  key_name                    = var.keypair
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.jenkins-master-sg.id]
+  subnet_id                   = aws_subnet.subnet_1.id
+  tags = {
+    "Name" = "Jenkins-master-node"
+  }
+  depends_on = [aws_main_route_table_association.set-master-default-rt-table]
+}
+
+###WORKER JENKINS EC2 INATANCES ###########
+resource "aws_instance" "jenkins-slave" {
+  provider                    = aws.region_worker
+  count                       = var.number-workers
+  ami                         = data.aws_ssm_parameter.linuxAmiWest.value
+  instance_type               = var.instance_type
+  key_name                    = var.keypair
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.jenkins-slave-sg.id]
+  subnet_id                   = aws_subnet.subnet_1_west2.id
+  tags = {
+    "Name" = join("-", ["Jenkins-slave-node", count.index + 1])
+  }
+  depends_on = [aws_main_route_table_association.set-worker-default-rt-table, aws_instance.jenkins-master]
+}
+
+#######OUTPUTS##################
 output "VPC-US-EAST-1" {
   value = aws_vpc.vpc-master.id
 }
@@ -247,4 +266,15 @@ output "JENKINS-MASTER-SG-ID" {
 
 output "JENKINS-SLAVE-SG-ID" {
   value = aws_security_group.jenkins-slave-sg.id
+}
+
+output "Jenkins-Master-IP" {
+  value = aws_instance.jenkins-master.public_ip
+}
+
+output "Jenkins-Slave-IP" {
+  value = {
+    for instance in aws_instance.jenkins-slave :
+    instance.id => instance.public_ip
+  }
 }
