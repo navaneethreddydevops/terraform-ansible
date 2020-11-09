@@ -225,6 +225,12 @@ resource "aws_instance" "jenkins-master" {
     "Name" = "Jenkins-master-node"
   }
   depends_on = [aws_main_route_table_association.set-master-default-rt-table]
+  provisioner "local-exec" {
+    command = <<EOF
+aws --profile ${var.profile} ec2 wait instance-status-ok --region ${var.region-master} --instance-id ${self.id}
+ansible-playbook --extra-vars 'passed_in_hosts=tag_Name_${self.tags.Name}' ansible_templates/jenkins-master.yaml
+    EOF
+  }
 }
 
 ###WORKER JENKINS EC2 INATANCES ###########
@@ -239,6 +245,12 @@ resource "aws_instance" "jenkins-slave" {
   subnet_id                   = aws_subnet.subnet_1_west2.id
   tags = {
     "Name" = join("-", ["Jenkins-slave-node", count.index + 1])
+  }
+  provisioner "local-exec" {
+    command = <<EOF
+aws --profile ${var.profile} ec2 wait instance-status-ok --region ${var.region-worker} --instance-id ${self.id}
+ansible-playbook --extra-vars 'passed_in_hosts=tag_Name_${self.tags.Name}' ansible_templates/jenkins-worker.yaml
+    EOF
   }
   depends_on = [aws_main_route_table_association.set-worker-default-rt-table, aws_instance.jenkins-master]
 }
