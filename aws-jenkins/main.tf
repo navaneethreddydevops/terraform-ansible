@@ -225,6 +225,13 @@ resource "aws_instance" "jenkins-master" {
     "Name" = "Jenkins-master"
   }
   depends_on = [aws_main_route_table_association.set-master-default-rt-table]
+  // provisioner "remote-exec" {
+  //   inline = [
+  //     "sudo yum update -y",
+  //     "sudo yum install httpd",
+  //     "sudo service start httpd",
+  //   ]
+  // }
   provisioner "local-exec" {
     command = <<EOF
 aws --profile ${var.profile} ec2 wait instance-status-ok --region ${var.region-master} --instance-id ${self.id}
@@ -298,6 +305,19 @@ resource "aws_lb_listener" "jenkins-listner" {
     target_group_arn = aws_lb_target_group.app-lb-tg.id
   }
 }
+resource "aws_lb_listener" "jenkins-listner-https" {
+  provider          = aws.region_master
+  load_balancer_arn = aws_alb.jenkins-alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_acm_certificate.jenkins-lb-https.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app-lb-tg.id
+  }
+}
 
 resource "aws_lb_target_group_attachment" "jenkins-master-attachment" {
   provider         = aws.region_master
@@ -335,11 +355,25 @@ resource "aws_route53_record" "cert_validation" {
   zone_id = data.aws_route53_zone.dns.zone_id
 }
 # Validates the ACM issued certificate via Route53
-resource "aws_acm_certificate_validation" "cert"{
-  provider=aws.region_master
-  certificate_arn = aws_acm_certificate.jenkins-lb-https.arn
-  for_each = aws_route53_record.cert_validation
+resource "aws_acm_certificate_validation" "cert" {
+  provider                = aws.region_master
+  certificate_arn         = aws_acm_certificate.jenkins-lb-https.arn
+  for_each                = aws_route53_record.cert_validation
   validation_record_fqdns = [aws_route53_record.cert_validation[each.key].fqdn]
+}
+
+# Creating an alias record
+resource "aws_route53_record" "jenkins" {
+  provider = aws.region_master
+  zone_id  = data.aws_route53_zone.dns.zone_id
+  name     = join(".", ["jenkins", data.aws_route53_zone.dns.name])
+  type     = "A"
+  alias {
+    name                   = aws_alb.jenkins-alb.dns_name
+    zone_id                = aws_alb.jenkins-alb.zone_id
+    evaluate_target_health = true
+  }
+
 }
 #######OUTPUTS##################
 output "VPC-US-EAST-1" {
