@@ -44,4 +44,7 @@ variable "number-workers" {
   type    = string
   default = "1"
 }
-
+variable "dns" {
+  type    = string
+  default = "navaneethreddydevops.com."
+}
