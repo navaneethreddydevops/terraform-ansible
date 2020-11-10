@@ -8,3 +8,12 @@
       yum:
         name: git
         state: present
+    - name: install httpd
+      yum:
+        name: httpd
+        state: present
+    - name: Start and Enable Httpd
+      yum:
+        name: httpd
+        state: started
+        enabled: yes
